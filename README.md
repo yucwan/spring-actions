@@ -4,7 +4,7 @@ This repository presents how to deploy Azure Spring Cloud by using GitHub Action
 
 ## How it works
 
-Azure has officially released GitHub Actions for Azure, including two actions, Azure login and Azure CLI.
+Azure has officially released [GitHub Actions for Azure](https://github.com/Azure/actions/), including two actions, Azure login and Azure CLI.
 
 This sample uses Azure login action to handle Azure authorization, and uses Azure CLI action to execute Azure Spring Cloud CLI.
 
