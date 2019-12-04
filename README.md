@@ -40,13 +40,13 @@ The command should output a JSON object similar to this:
 }
 ```
 
-Save this JSON string, and set this as secret in GitHub in the later step.
+Save this JSON string, and set it as secret in GitHub in the later step.
 
 ## Write your workflow
 
 Create a new repository in GitHub, create `.github/workflow/spring.yml` file in the repository, and paste code below:
 
-> You should clone the repository to your local machine first, and create the file on your local machine. If you create this file on GitHub in browser, the action should runs in error because you haven't set `secrets.AZURE_CREDENTIALS`. If you still would like to create the file online, see [**Re-run checks**](#re-run-checks) section to solve the error.
+> You should clone the repository to your local machine first, and create the file on your local machine. If you create this file on GitHub in browser, the action could run in error because you haven't set `secrets.AZURE_CREDENTIALS`. If you still would like to create the file online, see [**Re-run checks**](#re-run-checks) section to solve the error.
 
 ```yml
 on: [push]
