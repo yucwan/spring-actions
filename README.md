@@ -26,7 +26,7 @@ If you would like to access to specific resource group, you can reduce the scope
 az ad sp create-for-rbac --role contributor --scopes /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/{RESOURCE_GROUP} --sdk-auth
 ```
 
-For more details about manage Azure Active Directory service principals, see <https://docs.microsoft.com/en-us/cli/azure/ad/sp?view=azure-cli-latest#az-ad-sp-create-for-rbac>
+For more details about how to manage Azure Active Directory service principals, see <https://docs.microsoft.com/en-us/cli/azure/ad/sp?view=azure-cli-latest#az-ad-sp-create-for-rbac>
 
 The command should output a JSON object similar to this:
 
@@ -91,7 +91,7 @@ Set the secret name to `AZURE_CREDENTIALS`, and its value to the JSON string whi
 
 GitHub Actions should be enabled automatically after you push `.github/workflow/spring.yml` to GitHub. If you create this file in the browser, your action should have already run.
 
-To verify your action has been enable, click **Actions** tab on GitHub repository page:
+To verify your action has been enabled, click **Actions** tab on GitHub repository page:
 
 ![](media/actions.png)
 
@@ -105,7 +105,7 @@ On GitHub repository page, click **Actions**, select the specific workflow task,
 
 ## How to trigger GitHub Actions
 
-By default, GitHub Actions run when you push a new commit. If you would like trigger GitHub Actions without code change, you can push an empty commit to run your action:
+By default, GitHub Actions run when you push a new commit. If you would like to trigger GitHub Actions without code change, you can push an empty commit to run your action:
 
 ```
 git commit --allow-empty -m "Trigger GitHub Actions"
