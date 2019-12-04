@@ -108,7 +108,7 @@ On GitHub repository page, click **Actions**, select the specific workflow task,
 By default, GitHub Actions run when you push a new commit. If you would like trigger GitHub Actions without code change, you can push an empty commit to run your action:
 
 ```
-git commit --allow-empty -m "Trigger GitHub actions"
+git commit --allow-empty -m "Trigger GitHub Actions"
 git push
 ```
 
