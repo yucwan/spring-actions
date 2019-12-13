@@ -29,7 +29,7 @@ The command should output a JSON object similar to this:
     "clientSecret": "<GUID>",
     "subscriptionId": "<GUID>",
     "tenantId": "<GUID>",
-    (...)
+    ...
 }
 ```
 
