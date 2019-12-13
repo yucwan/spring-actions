@@ -1,14 +1,7 @@
-# GitHub Actions for Azure Spring Cloud Sample
+# GitHub Actions for Azure Spring Cloud
 
-This repository presents how to deploy Azure Spring Cloud by using GitHub Actions.
-
-## How it works
-
-Azure has officially released [GitHub Actions for Azure](https://github.com/Azure/actions/), including two actions, Azure login and Azure CLI.
-
-This sample uses Azure login action to handle Azure authorization, and uses Azure CLI action to execute Azure Spring Cloud CLI.
-
-## Prerequisite
+Azure has officially released [GitHub Actions for Azure](https://github.com/Azure/actions/), including two actions, `azure/login` for authentication and `azure/CLI` for running any Azure CLI commands. This tutorial shows how to use them to build up workflow with Azure Spring Cloud.
+## Set up your GitHub repository and authenticate with Azure 
 
 You need Azure credential to authorize Azure login action. To get Azure credential, you need execute command below on you local machine:
 
@@ -40,76 +33,108 @@ The command should output a JSON object similar to this:
 }
 ```
 
-Save this JSON string, and set it as secret in GitHub in the later step.
-
-## Write your workflow
-
-Create a new repository in GitHub, create `.github/workflow/spring.yml` file in the repository, and paste code below:
-
-> You should clone the repository to your local machine first, and create the file on your local machine. If you create this file on GitHub in browser, the action could run in error because you haven't set `secrets.AZURE_CREDENTIALS`. If you still would like to create the file online, see [**Re-run checks**](#re-run-checks) section to solve the error.
-
-```yml
-on: [push]
-
-name: AzureSpringCloud
-
-jobs:
-
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-    
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    
-    - name: Azure CLI script
-      uses: azure/CLI@v1
-      with:
-        azcliversion: 2.0.75
-        inlineScript: |
-          az extension add --name spring-cloud
-          az spring-cloud list
-```
-
-The last line is to execute `az spring-cloud list`, which list all spring cloud services in your subscriptions (if the credential scope you use is resource group, this command lists resources in the specific resource group).
-
-You can change command in the last line to what you need. Such as creating app with `az spring-cloud app create`.
-
-For full Azure Spring Cloud CLI reference, see <https://docs.microsoft.com/en-us/azure/spring-cloud/spring-cloud-cli-reference>
-
-## Set Azure credential and enable GitHub Actions
-
-Open GitHub repository page, and click **Settings** tab. Open **Secrets** menu, and click **Add a new secret**
+Fork [Piggy Metrics](https://github.com/Azure-Samples/piggymetrics), open GitHub repository page, and click **Settings** tab. Open **Secrets** menu, and click **Add a new secret**
 
 ![](media/secret.png)
 
 Set the secret name to `AZURE_CREDENTIALS`, and its value to the JSON string which you get in [**Prerequisite**](#prerequisite) section.
 
 ![](media/credential.png)
+## Provision your Azure Spirng Cloud service instance
+- Using Azure CLI:
+```bash
+az extension add --name spring-cloud
+az group create --location eastus --name <resource group name>
+az spring-cloud create -n <service instance name> -g <resource group name>
+az spring-cloud config-server git set -n <service instance name> --uri https://github.com/xxx/piggymetrics --label config
+```
 
-GitHub Actions should be enabled automatically after you push `.github/workflow/spring.yml` to GitHub. If you create this file in the browser, your action should have already run.
+## Build up workflow
+
+### Deploy with Azure CLI
+Be aware that `az spring-cloud app create` is currently not idempotent and thus it is recommended to use this workflow on existing Azure Spring Cloud apps and instances.
+
+- Azure CLI command for preparation:
+```bash
+az configure --defaults group=<service group name>
+az configure --defaults spring-cloud=<service instance name>
+az spring-cloud app create --name gateway
+az spring-cloud app create --name auth-service
+az spring-cloud app create --name account-service
+```
+
+- create `.github/workflow/main.yml` file in the repository:
+```yml
+on: [push]
+
+name: AzureSpringCloud
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    
+    # checkout the repo
+    - uses: actions/checkout@master
+    
+    # Set up Java environment
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    
+    # Maven build and clean
+    - name: maven build, clean
+      run: |
+        mvn clean package -D skipTests
+        
+    # Login to Auzre
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    # Deploy to your exsiting Apps
+    - name: Azure CLI script
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.0.75
+        inlineScript: |
+          az extension add --name spring-cloud
+          az configure --defaults group=xxx
+          az configure --defaults spring-cloud=xxx
+          az spring-cloud app deploy -n gateway --jar-path $GITHUB_WORKSPACE/gateway/target/gateway.jar
+          az spring-cloud app deploy -n account-service --jar-path $GITHUB_WORKSPACE/account-service/target/account-service.jar
+          az spring-cloud app deploy -n auth-service --jar-path $GITHUB_WORKSPACE/auth-service/target/auth-service.jar
+          az spring-cloud app update -n gateway --is-public true
+```
+
+### Deploy with Maven Plugin
+Another option is to use [Maven Plugin](https://docs.microsoft.com/en-us/azure/spring-cloud/spring-cloud-quickstart-launch-app-maven) for deploying Jar and updating App settings. `mvn azure-spring-cloud:deploy` is idempotent and will automatcally create Apps if needed. You don't need to create cooresponding apps in advance.
+
+```yml
+    # Maven plugin can cosume this authentication method automatically
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    # Maven deploy, make sure you have correct configurations in your pom.xml
+    - name: deploy to Azure Spring Cloud using Maven
+      run: |
+        mvn azure-spring-cloud:deploy
+```
+
+# Run the workflow
+
+GitHub Actions should be enabled automatically after you push `.github/workflow/main.yml` to GitHub. It will be triggerd when you push a new commit. If you create this file in the browser, your action should have already run.
 
 To verify your action has been enabled, click **Actions** tab on GitHub repository page:
 
 ![](media/actions.png)
-
-## Re-run checks
 
 If your action runs in error, such as you haven't set Azure credential, you can re-run checks after fix the error.
 
 On GitHub repository page, click **Actions**, select the specific workflow task, then click **Re-run checks** button to re-run checks:
 
 ![](media/rerun.png)
-
-## How to trigger GitHub Actions
-
-By default, GitHub Actions run when you push a new commit. If you would like to trigger GitHub Actions without code change, you can push an empty commit to run your action:
-
-```
-git commit --allow-empty -m "Trigger GitHub Actions"
-git push
-```
-
-This command may muck up your commit history though.
