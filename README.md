@@ -101,8 +101,8 @@ jobs:
         azcliversion: 2.0.75
         inlineScript: |
           az extension add --name spring-cloud
-          az configure --defaults group=xxx
-          az configure --defaults spring-cloud=xxx
+          az configure --defaults group=<service group name>
+          az configure --defaults spring-cloud=<service instance name>
           az spring-cloud app deploy -n gateway --jar-path $GITHUB_WORKSPACE/gateway/target/gateway.jar
           az spring-cloud app deploy -n account-service --jar-path $GITHUB_WORKSPACE/account-service/target/account-service.jar
           az spring-cloud app deploy -n auth-service --jar-path $GITHUB_WORKSPACE/auth-service/target/auth-service.jar
