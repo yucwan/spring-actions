@@ -1,6 +1,6 @@
 # GitHub Actions for Azure Spring Cloud
 
-Azure has officially released [GitHub Actions for Azure](https://github.com/Azure/actions/), including two actions, `azure/login` for authentication and `azure/CLI` for running any Azure CLI commands. This tutorial shows how to use them to build up workflow with Azure Spring Cloud.
+Azure has officially released [GitHub Actions for Azure](https://github.com/Azure/actions/), including `azure/login` handling Azure authentication. This tutorial shows how to use them to build up workflow with Azure Spring Cloud.
 ## Set up your GitHub repository and authenticate with Azure 
 
 You need Azure credential to authorize Azure login action. To get Azure credential, you need execute command below on you local machine:
@@ -65,48 +65,43 @@ az spring-cloud app create --name account-service
 
 - create `.github/workflow/main.yml` file in the repository:
 ```yml
-on: [push]
-
 name: AzureSpringCloud
+
+env:
+  GROUP: <resource group name>
+  SERVICE_NAME: <service instance name>
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
     
-    # checkout the repo
     - uses: actions/checkout@master
     
-    # Set up Java environment
     - name: Set up JDK 1.8
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
     
-    # Maven build and clean
     - name: maven build, clean
       run: |
         mvn clean package -D skipTests
-        
-    # Login to Auzre
+    
     - name: Azure Login
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
-    
-    # Deploy to your exsiting Apps
-    - name: Azure CLI script
-      uses: azure/CLI@v1
-      with:
-        azcliversion: 2.0.75
-        inlineScript: |
-          az extension add --name spring-cloud
-          az configure --defaults group=<service group name>
-          az configure --defaults spring-cloud=<service instance name>
-          az spring-cloud app deploy -n gateway --jar-path $GITHUB_WORKSPACE/gateway/target/gateway.jar
-          az spring-cloud app deploy -n account-service --jar-path $GITHUB_WORKSPACE/account-service/target/account-service.jar
-          az spring-cloud app deploy -n auth-service --jar-path $GITHUB_WORKSPACE/auth-service/target/auth-service.jar
-          az spring-cloud app update -n gateway --is-public true
+      
+    - name: Install ASC AZ extension
+      run: az extension add --name spring-cloud
+   
+    - name: Deploy with AZ CLI commands
+      run: |
+        az configure --defaults group=$GROUP
+        az configure --defaults spring-cloud=$SERVICE_NAME
+        az spring-cloud app deploy -n gateway --jar-path ${{ github.workspace }}/gateway/target/gateway.jar
+        az spring-cloud app deploy -n account-service --jar-path ${{ github.workspace }}/account-service/target/account-service.jar
+        az spring-cloud app deploy -n auth-service --jar-path ${{ github.workspace }}/auth-service/target/auth-service.jar
 ```
 
 ### Deploy with Maven Plugin
