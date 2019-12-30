@@ -65,6 +65,7 @@ az spring-cloud app create --name auth-service
 az spring-cloud app create --name account-service
 ```
 
+#### Deploy with Azure CLI directly
 - create `.github/workflow/main.yml` file in the repository:
 ```yml
 name: AzureSpringCloud
@@ -106,10 +107,11 @@ jobs:
         az spring-cloud app deploy -n auth-service --jar-path ${{ github.workspace }}/auth-service/target/auth-service.jar
 ```
 
-### Deploy with Azure CLI action
+#### Deploy with Azure CLI action
 Directly use az command with `run` will use the latest version of Azure CLI. In case of breacking changes, you can also use a specific version of Azure CLI with `azure/CLI` [action](https://github.com/Azure/cli). It will run all the az command in a new container so reminds that `env` will not work and cross action file access can have extra restictions.
 
-```
+- create `.github/workflow/main.yml` file in the repository:
+```yml
 name: AzureSpringCloud
 
 jobs:
